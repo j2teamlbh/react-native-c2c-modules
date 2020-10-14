@@ -1,0 +1,6 @@
+rootProject.name = 'C2CModulesExample'
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+include ':app'
+
+include ':reactnativec2cmodules'
+project(':reactnativec2cmodules').projectDir = new File(rootProject.projectDir, '../../android')
