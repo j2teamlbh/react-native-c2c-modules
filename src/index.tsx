@@ -1,11 +1,11 @@
 import { NativeModules } from 'react-native';
 
-interface PhAssetInfo {
+export interface PhAssetInfo {
   id: string;
   quality?: 'original' | 'high' | 'medium' | 'low';
 }
 
-interface PHAssetResponse {
+export interface PHAssetResponse {
   type: string;
   filename: string;
   path: string;
