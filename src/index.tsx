@@ -5,11 +5,18 @@ interface PhAssetInfo {
   quality?: 'original' | 'high' | 'medium' | 'low';
 }
 
+interface PHAssetResponse {
+  type: string;
+  filename: string;
+  path: string;
+  mimeType: string;
+}
+
 type C2CModulesType = {
   /**
    * IOS Only
    */
-  convertPHAsset({ id, quality }: PhAssetInfo): Promise<string>;
+  convertPHAsset({ id, quality }: PhAssetInfo): Promise<PHAssetResponse>;
 };
 
 const { C2CModules } = NativeModules;
