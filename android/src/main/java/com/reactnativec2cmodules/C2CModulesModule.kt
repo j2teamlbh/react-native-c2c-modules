@@ -10,13 +10,5 @@ class C2CModulesModule(reactContext: ReactApplicationContext) : ReactContextBase
     override fun getName(): String {
         return "C2CModules"
     }
-
-    // Example method
-    // See https://facebook.github.io/react-native/docs/native-modules-android
-    @ReactMethod
-    fun convertPHAsset(params: ReadableMap, promise: Promise) {
-      promise.reject("Android OS not supported")
-    }
-
     
 }

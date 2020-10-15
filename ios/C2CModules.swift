@@ -1,7 +1,7 @@
 @objc(C2CModules)
 class C2CModules: NSObject {
     
-    func convertToId(url: String) -> String {
+    private func convertToId(url: String) -> String {
         if url.contains("ph://") {
             let start = url.index(url.startIndex, offsetBy: 5)
             if url.count > 41 {
@@ -16,7 +16,7 @@ class C2CModules: NSObject {
         }
     }
     
-    func getQualityOfVideo(presetName: String) -> String {
+    private func getQualityOfVideo(presetName: String) -> String {
         if presetName == "low" {
             return AVAssetExportPresetLowQuality
         }else if presetName == "medium" {
@@ -28,7 +28,7 @@ class C2CModules: NSObject {
         }
     }
     
-    func exportVideo(key:String, inputurl: URL, presetName: String, outputFileType: AVFileType = .mp4, fileExtension: String = "mp4", then completion: @escaping (URL?) -> Void) {
+    private func exportVideo(key:String, inputurl: URL, presetName: String, outputFileType: AVFileType = .mp4, fileExtension: String = "mp4", then completion: @escaping (URL?) -> Void) {
         var outputURL:URL!
         let asset = AVAsset(url: inputurl)
         if #available(iOS 10.0, *) {
@@ -57,7 +57,7 @@ class C2CModules: NSObject {
         }
     }
     
-    func getURL(ofMediaWith mPhasset: PHAsset, completionHandler : @escaping ((_ responseURL : URL?) -> Void)) {
+    private func getURL(ofMediaWith mPhasset: PHAsset, completionHandler : @escaping ((_ responseURL : URL?) -> Void)) {
         if mPhasset.mediaType == .image {
             let options: PHContentEditingInputRequestOptions = PHContentEditingInputRequestOptions()
             options.canHandleAdjustmentData = {(adjustmeta: PHAdjustmentData) -> Bool in
