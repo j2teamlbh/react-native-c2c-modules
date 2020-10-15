@@ -16,68 +16,118 @@ class C2CModules: NSObject {
         }
     }
     
+    func getQualityOfVideo(presetName: String) -> String {
+        if presetName == "low" {
+            return AVAssetExportPresetLowQuality
+        }else if presetName == "medium" {
+            return AVAssetExportPresetMediumQuality
+        }else if presetName == "high" {
+            return AVAssetExportPresetHighestQuality
+        }else {
+            return AVAssetExportPresetPassthrough
+        }
+    }
+    
+    func exportVideo(key:String, inputurl: URL, presetName: String, outputFileType: AVFileType = .mp4, fileExtension: String = "mp4", then completion: @escaping (URL?) -> Void) {
+        var outputURL:URL!
+        let asset = AVAsset(url: inputurl)
+        if #available(iOS 10.0, *) {
+            outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(key)
+            if let session = AVAssetExportSession(asset: asset, presetName: presetName) {
+                session.outputURL = outputURL
+                session.outputFileType = outputFileType
+                session.shouldOptimizeForNetworkUse = true
+                session.exportAsynchronously {
+                    switch session.status {
+                    case .completed:
+                        completion(outputURL)
+                    case .cancelled:
+                        completion(nil)
+                    case .failed:
+                        completion(nil)
+                    default:
+                        break
+                    }
+                }
+            }else {
+                completion(nil)
+            }
+        }else {
+            completion(nil)
+        }
+    }
+    
+    func getURL(ofMediaWith mPhasset: PHAsset, completionHandler : @escaping ((_ responseURL : URL?) -> Void)) {
+        if mPhasset.mediaType == .image {
+            let options: PHContentEditingInputRequestOptions = PHContentEditingInputRequestOptions()
+            options.canHandleAdjustmentData = {(adjustmeta: PHAdjustmentData) -> Bool in
+                return true
+            }
+            mPhasset.requestContentEditingInput(with: options, completionHandler: { (contentEditingInput, info) in
+                completionHandler(contentEditingInput!.fullSizeImageURL)
+            })
+        } else if mPhasset.mediaType == .video {
+            let options: PHVideoRequestOptions = PHVideoRequestOptions()
+            options.version = .original
+            PHImageManager.default().requestAVAsset(forVideo: mPhasset, options: options, resultHandler: { (asset, audioMix, info) in
+                if let urlAsset = asset as? AVURLAsset {
+                    let localVideoUrl = urlAsset.url
+                    completionHandler(localVideoUrl)
+                } else {
+                    completionHandler(nil)
+                }
+            })
+        }
+    }
+    
     @objc(convertPHAsset:withResolver:withRejecter:)
-    func convertPHAsset(params: NSDictionary, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
-        let phAsset:String = RCTConvert.nsString(params["id"])
-//        let qualityVideo:String = RCTConvert.nsString(params["quality"])
-        //Todo
-        let mediaId = convertToId(url: phAsset)
+    func convertPHAsset(params: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+        if #available(iOS 10.0, *) {} else {
+            let error = NSError(domain: "", code: -1, userInfo: nil)
+            reject("ERROR_FOUND", "This function is only available in iOS 10.0 or newer", error)
+            return;
+        }
+        let phAssetParams:String = RCTConvert.nsString(params["id"])
+        let qualityParams:String = RCTConvert.nsString(params["quality"]) ?? "original"
+        let presetName:String = getQualityOfVideo(presetName: qualityParams)
+        let mediaId = convertToId(url: phAssetParams)
         if mediaId.count < 36 {
-            let error = NSError(domain: "", code: -91, userInfo: nil)
+            let error = NSError(domain: "", code: -2, userInfo: nil)
             reject("ERROR_FOUND", "Invalid URL", error)
             return;
         }
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [mediaId], options: nil)
-        let fileName = UUID().uuidString
-        if let phAsset = fetchResult.firstObject {
-            PHImageManager.default().requestAVAsset(forVideo: phAsset, options: PHVideoRequestOptions(), resultHandler: { (asset, audioMix, info) -> Void in
-                if let asset = asset as? AVURLAsset {
-                    //                    let videoData = NSData(contentsOf: asset.url)
-                    let videoPath = NSTemporaryDirectory() + "\(fileName).mp4"
-                    let videoURL = NSURL(fileURLWithPath: videoPath)
-                    let avAsset = AVURLAsset(url: videoURL as URL, options: nil)
-                    if #available(iOS 10.0, *) {
-                        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(fileName).mp4")
-                        if let session = AVAssetExportSession(asset: avAsset, presetName: AVAssetExportPresetPassthrough) {
-                            session.outputURL = outputURL
-                            session.outputFileType = AVFileType.mp4
-                            let start = CMTimeMakeWithSeconds(0.0, preferredTimescale: 0)
-                            let range = CMTimeRangeMake(start: start, duration: asset.duration)
-                            session.timeRange = range
-                            session.shouldOptimizeForNetworkUse = true
-                            session.exportAsynchronously {
-                                switch session.status {
-                                case .completed:
-                                    resolve("Output: \(outputURL)")
-                                case .cancelled:
-                                    let error = NSError(domain: "", code: -94, userInfo: nil)
-                                    reject("ERROR_FOUND", "Video export cancelled.", error)
-                                case .failed:
-                                    let errorMessage = session.error?.localizedDescription ?? "n/a"
-                                    let error = NSError(domain: "", code: -95, userInfo: nil)
-                                    reject("ERROR_FOUND", "Video export failed with error: \(errorMessage)", error)
-                                default:
-                                    let error = NSError(domain: "", code: -96, userInfo: nil)
-                                    reject("ERROR_FOUND", "Video export error.", error)
-                                }
+        if let mPhasset = fetchResult.firstObject {
+            getURL(ofMediaWith: mPhasset, completionHandler: {(url: URL?) -> Void in
+                if let originalUrl = url {
+                    let fileName = UUID().uuidString
+                    let origUrlStr: String = originalUrl.absoluteString
+                    if origUrlStr.lowercased().contains(".mp4") {
+                        let dataResult: NSMutableDictionary = [:]
+                        dataResult["type"] = "video"
+                        dataResult["filename"] = "\(fileName).mp4"
+                        dataResult["path"] = origUrlStr
+                        dataResult["mimeType"] = "video/mp4"
+                        resolve(dataResult)
+                    } else if origUrlStr.lowercased().contains(".mov") {
+                        self.exportVideo(key: "\(fileName).mp4", inputurl: originalUrl, presetName: presetName) { (successData) in
+                            if let convertedUrl = successData {
+                                let convertedUrlStr: String = convertedUrl.absoluteString
+                                let dataResult: NSMutableDictionary = [:]
+                                dataResult["type"] = "video"
+                                dataResult["filename"] = "\(fileName).mp4"
+                                dataResult["path"] = convertedUrlStr
+                                dataResult["mimeType"] = "video/mp4"
+                                resolve(dataResult)
                             }
                         }
-                    } else {
-                        let error = NSError(domain: "", code: -93, userInfo: nil)
-                        reject("ERROR_FOUND", "Video export error.", error)
+                    }else {
+                        let error = NSError(domain: "", code: -3, userInfo: nil)
+                        reject("ERROR_FOUND", "File not supported", error)
+                        return;
                     }
                 }
             })
         }
-        //        if mPhasset?.mediaType == .video {
-        //
-        //            resolve("AssetId: \(mediaId) - qualityVideo: \(qualityVideo) - phFile: \(String(describing: mPhasset))")
-        //        } else {
-        //            let error = NSError(domain: "", code: -92, userInfo: nil)
-        //            reject("ERROR_FOUND", "Can't get media", error)
-        //            return;
-        //        }
-        
-        
     }
 }

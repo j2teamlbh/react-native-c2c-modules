@@ -2,10 +2,13 @@ import { NativeModules } from 'react-native';
 
 interface PhAssetInfo {
   id: string;
-  quality: 'original' | 'high' | 'medium' | 'low';
+  quality?: 'original' | 'high' | 'medium' | 'low';
 }
 
 type C2CModulesType = {
+  /**
+   * IOS Only
+   */
   convertPHAsset({ id, quality }: PhAssetInfo): Promise<string>;
 };
 
