@@ -14,10 +14,8 @@ class C2CModulesModule(reactContext: ReactApplicationContext) : ReactContextBase
     // Example method
     // See https://facebook.github.io/react-native/docs/native-modules-android
     @ReactMethod
-    fun multiply(a: Int, b: Int, promise: Promise) {
-    
-      promise.resolve(a * b)
-    
+    fun convertPHAsset(params: ReadableMap, promise: Promise) {
+      promise.reject("Android OS not supported")
     }
 
     
