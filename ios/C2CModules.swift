@@ -57,24 +57,25 @@ class C2CModules: NSObject {
         }
     }
     
-    private func getURL(ofMediaWith mPhasset: PHAsset, completionHandler : @escaping ((_ responseURL : URL?) -> Void)) {
+    private func getURL(ofMediaWith mPhasset: PHAsset, completionHandler : @escaping ((_ responseURL : URL?, _ mediaType: String) -> Void)) {
         if mPhasset.mediaType == .image {
             let options: PHContentEditingInputRequestOptions = PHContentEditingInputRequestOptions()
             options.canHandleAdjustmentData = {(adjustmeta: PHAdjustmentData) -> Bool in
                 return true
             }
             mPhasset.requestContentEditingInput(with: options, completionHandler: { (contentEditingInput, info) in
-                completionHandler(contentEditingInput!.fullSizeImageURL)
+                completionHandler(contentEditingInput!.fullSizeImageURL, "image")
             })
         } else if mPhasset.mediaType == .video {
             let options: PHVideoRequestOptions = PHVideoRequestOptions()
             options.version = .original
+            options.isNetworkAccessAllowed = true
             PHImageManager.default().requestAVAsset(forVideo: mPhasset, options: options, resultHandler: { (asset, audioMix, info) in
                 if let urlAsset = asset as? AVURLAsset {
                     let localVideoUrl = urlAsset.url
-                    completionHandler(localVideoUrl)
+                    completionHandler(localVideoUrl, "video")
                 } else {
-                    completionHandler(nil)
+                    completionHandler(nil, "")
                 }
             })
         }
@@ -98,18 +99,10 @@ class C2CModules: NSObject {
         }
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [mediaId], options: nil)
         if let mPhasset = fetchResult.firstObject {
-            getURL(ofMediaWith: mPhasset, completionHandler: {(url: URL?) -> Void in
+            getURL(ofMediaWith: mPhasset, completionHandler: {(url: URL?, mediaType: String) -> Void in
                 if let originalUrl = url {
                     let fileName = UUID().uuidString
-                    let origUrlStr: String = originalUrl.absoluteString
-                    if origUrlStr.lowercased().contains(".mp4") {
-                        let dataResult: NSMutableDictionary = [:]
-                        dataResult["type"] = "video"
-                        dataResult["filename"] = "\(fileName).mp4"
-                        dataResult["path"] = origUrlStr
-                        dataResult["mimeType"] = "video/mp4"
-                        resolve(dataResult)
-                    } else if origUrlStr.lowercased().contains(".mov") {
+                    if mediaType == "video" {
                         self.exportVideo(key: "\(fileName).mp4", inputurl: originalUrl, presetName: presetName) { (successData) in
                             if let convertedUrl = successData {
                                 let convertedUrlStr: String = convertedUrl.absoluteString
@@ -121,11 +114,15 @@ class C2CModules: NSObject {
                                 resolve(dataResult)
                             }
                         }
-                    }else {
+                    } else {
                         let error = NSError(domain: "", code: -3, userInfo: nil)
                         reject("ERROR_FOUND", "File not supported", error)
                         return;
                     }
+                } else {
+                    let error = NSError(domain: "", code: -3, userInfo: nil)
+                    reject("ERROR_FOUND", "File not supported", error)
+                    return;
                 }
             })
         }
