@@ -1,4 +1,4 @@
-import { NativeModules } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 
 export interface PhAssetInfo {
   id: string;
@@ -14,11 +14,43 @@ export interface PHAssetResponse {
 
 type C2CModulesType = {
   /**
+   * Convert PHAsset to AVAsset
    * IOS Only
    */
   convertPHAsset({ id, quality }: PhAssetInfo): Promise<PHAssetResponse>;
+  /**
+   * Change screen to fullscreen
+   * Android Only
+   */
+  onFullScreen(): void;
+  /**
+   * Change screen to normal
+   * Android Only
+   */
+  offFullScreen(): void;
 };
-
 const { C2CModules } = NativeModules;
 
-export default C2CModules as C2CModulesType;
+const onFullScreen = () => {
+  if (Platform.OS === 'android') {
+    C2CModules.onFullScreen();
+  }
+};
+
+const offFullScreen = () => {
+  if (Platform.OS === 'android') {
+    C2CModules.onFullScreen();
+  }
+};
+
+const convertPHAsset = ({ id, quality }: PhAssetInfo) => {
+  if (Platform.OS === 'ios') {
+    C2CModules.convertPHAsset({ id, quality });
+  }
+};
+
+export default {
+  onFullScreen,
+  convertPHAsset,
+  offFullScreen,
+} as C2CModulesType;
