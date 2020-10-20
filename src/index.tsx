@@ -33,19 +33,19 @@ const { C2CModules } = NativeModules;
 
 const onFullScreen = () => {
   if (Platform.OS === 'android') {
-    C2CModules.onFullScreen();
+    return C2CModules.onFullScreen();
   }
 };
 
 const offFullScreen = () => {
   if (Platform.OS === 'android') {
-    C2CModules.onFullScreen();
+    return C2CModules.offFullScreen();
   }
 };
 
 const convertPHAsset = ({ id, quality }: PhAssetInfo) => {
   if (Platform.OS === 'ios') {
-    C2CModules.convertPHAsset({ id, quality });
+    return C2CModules.convertPHAsset({ id, quality });
   }
 };
 
