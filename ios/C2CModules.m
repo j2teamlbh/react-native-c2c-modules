@@ -8,7 +8,11 @@
 }
 
 RCT_EXTERN_METHOD(convertPHAsset:(NSDictionary *)params
-                withResolver:(RCTPromiseResolveBlock)resolve
-                withRejecter:(RCTPromiseRejectBlock)reject)
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(showLimitedLibrary)
+
+RCT_EXTERN_METHOD(checkPhotoLibrary:(RCTResponseSenderBlock)callback)
 
 @end

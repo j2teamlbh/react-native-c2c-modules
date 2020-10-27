@@ -1,5 +1,7 @@
+import PhotosUI
+
 @objc(C2CModules)
-class C2CModules: NSObject {
+class C2CModules: RCTEventEmitter, PHPhotoLibraryChangeObserver {
     
     private func convertToId(url: String) -> String {
         if url.contains("ph://") {
@@ -125,6 +127,56 @@ class C2CModules: NSObject {
                     return;
                 }
             })
+        }
+    }
+    
+    public override init() {
+        super.init()
+        PHPhotoLibrary.shared().register(self)
+    }
+
+    override func supportedEvents() -> [String]! {
+        return ["photoLibraryChanged"]
+    }
+    
+    func photoLibraryDidChange(_ changeInstance: PHChange) {
+        DispatchQueue.main.async {
+            self.sendEvent(withName: "photoLibraryChanged", body: true)
+        }
+    }
+    
+    @objc(showLimitedLibrary)
+    func showLimitedLibrary() -> Void {
+        if #available(iOS 14.0, *) {
+            DispatchQueue.main.async {
+                let rootVc = UIApplication.shared.keyWindow!.rootViewController ?? UIViewController()
+                PHPhotoLibrary.shared().presentLimitedLibraryPicker(from: rootVc)
+            }
+        }
+    }
+    
+    @objc(checkPhotoLibrary:)
+    func checkPhotoLibrary(callback: RCTResponseSenderBlock) -> Void {
+        if #available(iOS 14, *) {
+            switch PHPhotoLibrary.authorizationStatus(for: .readWrite) {
+            case .notDetermined:
+                callback([NSNull() ,"notDetermined"])
+                break
+            case .restricted, .denied:
+                callback([NSNull() ,"denied"])
+                break
+            case .authorized:
+                callback([NSNull() ,"authorized"])
+                break
+            case .limited:
+                callback([NSNull() ,"limited"])
+                break
+            @unknown default:
+                callback([NSNull() ,"blocked"])
+                break
+            }
+        } else {
+            // Fallback on earlier versions
         }
     }
 }
