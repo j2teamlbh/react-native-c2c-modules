@@ -1,6 +1,7 @@
 package com.reactnativec2cmodules
 
-import android.view.View
+import android.os.Build
+import android.view.WindowManager
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
