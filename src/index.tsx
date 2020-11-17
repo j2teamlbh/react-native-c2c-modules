@@ -45,6 +45,16 @@ type C2CModulesType = {
    * IOS Only
    */
   checkPhotoLibrary(callback: (err: any, res: PermissionType) => void): void;
+  /**
+   * Set badge number
+   * Android Only
+   */
+  setNotificationBadge(count: number): void;
+  /**
+   * Reset badge number
+   * Android Only
+   */
+  removeNotificationBadge(): void;
 };
 const { C2CModules } = NativeModules;
 
@@ -95,6 +105,18 @@ const addListener = (
   return eventEmitter.addListener(typeName, callback);
 };
 
+const setNotificationBadge = (count: number) => {
+  if (Platform.OS === 'android') {
+    return C2CModules.setNotificationBadge(count);
+  }
+};
+
+const removeNotificationBadge = () => {
+  if (Platform.OS === 'android') {
+    return C2CModules.removeNotificationBadge();
+  }
+};
+
 export default {
   onFullScreen,
   convertPHAsset,
@@ -102,4 +124,6 @@ export default {
   showLimitedLibrary,
   addListener,
   checkPhotoLibrary,
+  setNotificationBadge,
+  removeNotificationBadge,
 } as C2CModulesType;

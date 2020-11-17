@@ -6,6 +6,7 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.UiThreadUtil
+import me.leolin.shortcutbadger.ShortcutBadger
 
 class C2CModulesModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
 
@@ -31,5 +32,13 @@ class C2CModulesModule(reactContext: ReactApplicationContext) : ReactContextBase
     }
   }
 
+  @ReactMethod
+  fun setNotificationBadge(number: Int) {
+    ShortcutBadger.applyCount(this.reactApplicationContext, number)
+  }
 
+  @ReactMethod
+  fun removeNotificationBadge() {
+    ShortcutBadger.removeCount(this.reactApplicationContext)
+  }
 }
